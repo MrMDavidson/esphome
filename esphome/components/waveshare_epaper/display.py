@@ -169,10 +169,11 @@ def validate_reset_pin_required(config):
         )
     return config
 
+
 def validate_grayscale4_supported(config):
     print(config[CONF_MODEL])
     if CONF_INITIAL_MODE in config:
-        if config[CONF_MODEL] in ['4.20in-v2']:
+        if config[CONF_MODEL] in ["4.20in-v2"]:
             return config
         raise cv.Invalid(
             f"'{CONF_INITIAL_MODE}' is supported for model {config[CONF_MODEL]}"

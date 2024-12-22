@@ -1,3 +1,5 @@
+#pragma once
+
 #include "waveshare_epaper.h"
 
 namespace esphome {
