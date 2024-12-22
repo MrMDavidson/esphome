@@ -334,45 +334,31 @@ void HOT WaveshareEPaper4P2InV2::draw_absolute_pixel_internal(int x, int y, Colo
   const uint8_t subpos = x & 0x07;
   const uint32_t buf_half_len = this->get_buffer_length_() / 2u;
 
-  if (!color.is_on()) {
-    if (this->initial_mode_ == MODE_GRAYSCALE4) {
-      // flip logic
+  if (this->initial_mode_ == MODE_GRAYSCALE4) {
+    uint8_t gray = (color.white != 0) ? color.white : ((color.red * 299 + color.green * 587 + color.blue * 114) / 1000);
+    
+    if (gray >= 192) {
+      // White (00)
       this->buffer_[pos] &= ~(0x80 >> subpos);
       this->buffer_[pos + buf_half_len] &= ~(0x80 >> subpos);
-    } else {
+    } else if (gray >= 128) {
+      // Light Gray (10)
+      this->buffer_[pos] |= (0x80 >> subpos);
+      this->buffer_[pos + buf_half_len] &= ~(0x80 >> subpos);
+    } else if (gray >= 64) {
+      // Dark Gray (01)
       this->buffer_[pos] &= ~(0x80 >> subpos);
+      this->buffer_[pos + buf_half_len] |= (0x80 >> subpos);
+    } else {
+      // Black (11)
+      this->buffer_[pos] |= (0x80 >> subpos);
+      this->buffer_[pos + buf_half_len] |= (0x80 >> subpos);
     }
   } else {
-    if (this->initial_mode_ == MODE_GRAYSCALE4) {
-
-/****Color display description****
-      white  gray1  gray2  black
-0x10|  01     01     00     00
-0x13|  01     00     01     00
-*********************************/
-
-      if (((color.red > 0) || (color.green > 0) || (color.blue > 0))) {
-        // draw gray pixels
-        if ((color.red >= 0xc0) || (color.green >= 0xc0) || (color.blue >= 0xc0)) {
-          // white
-          this->buffer_[pos] |= 0x80 >> subpos;
-          this->buffer_[pos + buf_half_len] |= 0x80 >> subpos;
-        } else if ((color.red >= 0x80) || (color.green >= 0x80) || (color.blue >= 0x80)) {
-          // gray 1
-          this->buffer_[pos] &= ~(0x80 >> subpos);
-          this->buffer_[pos + buf_half_len] |= 0x80 >> subpos;
-        } else {
-          // gray 2
-          this->buffer_[pos] |= 0x80 >> subpos;
-          this->buffer_[pos + buf_half_len] &= ~(0x80 >> subpos);
-        }
-      } else {
-          // black
-          this->buffer_[pos] &= ~(0x80 >> subpos);
-          this->buffer_[pos + buf_half_len] &= ~(0x80 >> subpos);
-      }
+    // Binary mode logic
+    if (!color.is_on()) {
+      this->buffer_[pos] &= ~(0x80 >> subpos);
     } else {
-      // flip logic
       if ((color.r > 0) || (color.g > 0) || (color.b > 0))
         this->buffer_[pos] &= ~(0x80 >> subpos);
       else
