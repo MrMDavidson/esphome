@@ -108,6 +108,12 @@ def is_authenticated(handler: BaseHandler) -> bool:
             return True
 
     if settings.using_auth:
+        if auth_header := handler.request.headers.get("Authorization"):
+            assert isinstance(auth_header, str)
+            if auth_header.startswith("Basic "):
+                auth_decoded = base64.b64decode(auth_header[6:]).decode()
+                username, password = auth_decoded.split(":", 1)
+                return settings.check_password(username, password)
         return handler.get_secure_cookie(AUTH_COOKIE_NAME) == COOKIE_AUTHENTICATED_YES
 
     return True
@@ -320,12 +326,12 @@ class EsphomePortCommandWebSocket(EsphomeCommandWebSocket):
             and "api" in entry.loaded_integrations
         ):
             if (mdns := dashboard.mdns_status) and (
-                address := await mdns.async_resolve_host(entry.name)
+                address_list := await mdns.async_resolve_host(entry.name)
             ):
                 # Use the IP address if available but only
                 # if the API is loaded and the device is online
                 # since MQTT logging will not work otherwise
-                port = address
+                port = address_list[0]
             elif (
                 entry.address
                 and (
@@ -544,7 +550,7 @@ class ImportRequestHandler(BaseHandler):
 
 class IgnoreDeviceRequestHandler(BaseHandler):
     @authenticated
-    def post(self) -> None:
+    async def post(self) -> None:
         dashboard = DASHBOARD
         try:
             args = json.loads(self.request.body.decode())
@@ -576,7 +582,8 @@ class IgnoreDeviceRequestHandler(BaseHandler):
         else:
             dashboard.ignored_devices.discard(ignored_device.device_name)
 
-        dashboard.save_ignored_devices()
+        loop = asyncio.get_running_loop()
+        await loop.run_in_executor(None, dashboard.save_ignored_devices)
 
         self.set_status(204)
         self.finish()

@@ -135,8 +135,8 @@ class HttpRequestComponent : public Component {
 
  protected:
   const char *useragent_{nullptr};
-  bool follow_redirects_;
-  uint16_t redirect_limit_;
+  bool follow_redirects_{};
+  uint16_t redirect_limit_{};
   uint16_t timeout_{4500};
   uint32_t watchdog_timeout_{0};
 };
@@ -156,6 +156,8 @@ template<typename... Ts> class HttpRequestSendAction : public Action<Ts...> {
   void set_json(std::function<void(Ts..., JsonObject)> json_func) { this->json_func_ = json_func; }
 
   void register_response_trigger(HttpRequestResponseTrigger *trigger) { this->response_triggers_.push_back(trigger); }
+
+  void register_error_trigger(Trigger<> *trigger) { this->error_triggers_.push_back(trigger); }
 
   void set_max_response_buffer_size(size_t max_response_buffer_size) {
     this->max_response_buffer_size_ = max_response_buffer_size;
@@ -186,6 +188,8 @@ template<typename... Ts> class HttpRequestSendAction : public Action<Ts...> {
     auto container = this->parent_->start(this->url_.value(x...), this->method_.value(x...), body, headers);
 
     if (container == nullptr) {
+      for (auto *trigger : this->error_triggers_)
+        trigger->trigger();
       return;
     }
 
@@ -237,7 +241,8 @@ template<typename... Ts> class HttpRequestSendAction : public Action<Ts...> {
   std::map<const char *, TemplatableValue<const char *, Ts...>> headers_{};
   std::map<const char *, TemplatableValue<std::string, Ts...>> json_{};
   std::function<void(Ts..., JsonObject)> json_func_{nullptr};
-  std::vector<HttpRequestResponseTrigger *> response_triggers_;
+  std::vector<HttpRequestResponseTrigger *> response_triggers_{};
+  std::vector<Trigger<> *> error_triggers_{};
 
   size_t max_response_buffer_size_{SIZE_MAX};
 };
