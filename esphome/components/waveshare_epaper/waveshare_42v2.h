@@ -5,12 +5,7 @@
 namespace esphome {
 namespace waveshare_epaper {
 
-enum TurnOnMode {
-  MODE_PARTIAL = 0,
-  MODE_FULL,
-  MODE_FAST,
-  MODE_GRAYSCALE4
-};
+enum TurnOnMode { MODE_PARTIAL = 0, MODE_FULL, MODE_FAST, MODE_GRAYSCALE4 };
 
 class WaveshareEPaper4P2InV2 : public WaveshareEPaper {
  public:
@@ -20,7 +15,7 @@ class WaveshareEPaper4P2InV2 : public WaveshareEPaper {
   void deep_sleep() override;
 
   void set_full_update_every(uint32_t full_update_every);
-  void set_initial_mode(uint8_t mode) { this->initial_mode_ = (TurnOnMode)mode; }
+  void set_initial_mode(uint8_t mode) { this->initial_mode_ = (TurnOnMode) mode; }
 
  protected:
   void initialize_internal_(TurnOnMode mode);
