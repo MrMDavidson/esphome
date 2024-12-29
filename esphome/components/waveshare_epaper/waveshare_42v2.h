@@ -25,7 +25,7 @@ class WaveshareEPaper4P2InV2 : public WaveshareEPaper {
   void write_lut_();
 
   void reset_();
-  void set_window_(uint16_t x, uint16_t y, uint16_t x1, uint16_t y2);
+  void set_window_(uint16_t x, uint16_t y, uint16_t x2, uint16_t y2);
   void set_cursor_(uint16_t x, uint16_t y);
   void clear_();
 

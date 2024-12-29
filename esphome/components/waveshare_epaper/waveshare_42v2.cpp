@@ -86,10 +86,11 @@ void WaveshareEPaper4P2InV2::update_(TurnOnMode mode) {
 
   this->command(0x24);
   this->start_data_();
-  if (mode == MODE_GRAYSCALE4)
+  if (mode == MODE_GRAYSCALE4) {
     this->write_array(this->buffer_, buf_half_len);
-  else
+  } else {
     this->write_array(this->buffer_, this->get_buffer_length_());
+  }
   this->end_data_();
 
   // new data
@@ -213,17 +214,19 @@ void WaveshareEPaper4P2InV2::initialize_internal_(TurnOnMode mode) {
   }
 
   this->command(0x21);
-  if (mode == MODE_GRAYSCALE4)
+  if (mode == MODE_GRAYSCALE4) {
     this->data(0x00);
-  else
+  } else {
     this->data(0x40);
+  }
   this->data(0x00);
 
   this->command(0x3C);
-  if (mode == MODE_GRAYSCALE4)
+  if (mode == MODE_GRAYSCALE4) {
     this->data(0x03);
-  else
+  } else {
     this->data(0x05);
+  }
 
   if (mode == MODE_FAST) {
 #if MODE_1_5_SECOND
@@ -268,10 +271,11 @@ void WaveshareEPaper4P2InV2::initialize_internal_(TurnOnMode mode) {
 }
 
 void WaveshareEPaper4P2InV2::initialize() {
-  if (this->initial_mode_ == MODE_PARTIAL)
+  if (this->initial_mode_ == MODE_PARTIAL) {
     this->initialize_internal_(MODE_FULL);
-  else
+  } else {
     this->initialize_internal_(this->initial_mode_);
+  }
 }
 
 uint32_t WaveshareEPaper4P2InV2::idle_timeout_() {
@@ -340,10 +344,11 @@ void HOT WaveshareEPaper4P2InV2::draw_absolute_pixel_internal(int x, int y, Colo
     if (!color.is_on()) {
       this->buffer_[pos] &= ~(0x80 >> subpos);
     } else {
-      if ((color.r > 0) || (color.g > 0) || (color.b > 0))
+      if ((color.r > 0) || (color.g > 0) || (color.b > 0)) {
         this->buffer_[pos] &= ~(0x80 >> subpos);
-      else
+      } else {
         this->buffer_[pos] |= (0x80 >> subpos);
+      }
     }
   }
 }
@@ -351,10 +356,11 @@ void HOT WaveshareEPaper4P2InV2::draw_absolute_pixel_internal(int x, int y, Colo
 void WaveshareEPaper4P2InV2::dump_config() {
   LOG_DISPLAY("", "Waveshare E-Paper", this)
   ESP_LOGCONFIG(TAG, "  Model: 4.20inV2");
-  if (this->initial_mode_ == MODE_GRAYSCALE4)
+  if (this->initial_mode_ == MODE_GRAYSCALE4) {
     ESP_LOGCONFIG(TAG, "  Initial Mode: 4 Grayscale");
-  else if (this->initial_mode_ == MODE_FAST)
+  } else if (this->initial_mode_ == MODE_FAST) {
     ESP_LOGCONFIG(TAG, "  Initial Mode: Fast");
+  }
   LOG_PIN("  CS Pin: ", this->cs_)
   LOG_PIN("  Reset Pin: ", this->reset_pin_)
   LOG_PIN("  DC Pin: ", this->dc_pin_)
