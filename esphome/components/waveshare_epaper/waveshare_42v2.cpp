@@ -221,8 +221,8 @@ void WaveshareEPaper4P2InV2::write_lut_() {
 }
 
 void WaveshareEPaper4P2InV2::initialize_internal_(TurnOnMode mode) {
-#define MODE_1_SECOND 1
-#define MODE_1_5_SECOND 0
+  static const uint8_t MODE_1_SECOND = 1;
+  static const uint8_t MODE_1_5_SECOND = 0;
 
   this->reset_();
   if (!this->wait_until_idle_()) {
@@ -307,7 +307,8 @@ uint32_t WaveshareEPaper4P2InV2::idle_timeout_() {
 void WaveshareEPaper4P2InV2::deep_sleep() {
   this->command(0x10);
   this->data(0x01);
-  delay(200);
+  // Instead of delay(200), we'll rely on the busy pin to indicate when the display is ready
+  // The busy pin will be checked in wait_until_idle_() before any new operations
 }
 
 void WaveshareEPaper4P2InV2::set_full_update_every(uint32_t full_update_every) {
@@ -319,12 +320,14 @@ int WaveshareEPaper4P2InV2::get_width_internal() { return 400; }
 int WaveshareEPaper4P2InV2::get_height_internal() { return 300; }
 
 void WaveshareEPaper4P2InV2::reset_() {
-  this->reset_pin_->digital_write(true);  // Note: Should be inverted logic
-  delay(100);
-  this->reset_pin_->digital_write(false);  // Note: Should be inverted logic according to the docs
-  delay(this->reset_duration_);
-  this->reset_pin_->digital_write(true);  // Note: Should be inverted logic
-  delay(100);
+  // The reset sequence is now handled through the busy pin and wait_until_idle_()
+  // Note: Documentation implies that the reset pin should be inverted compared to this
+  this->reset_pin_->digital_write(true);
+  this->wait_until_idle_();
+  this->reset_pin_->digital_write(false);
+  this->wait_until_idle_();
+  this->reset_pin_->digital_write(true);
+  this->wait_until_idle_();
 }
 
 void HOT WaveshareEPaper4P2InV2::draw_absolute_pixel_internal(int x, int y, Color color) {
