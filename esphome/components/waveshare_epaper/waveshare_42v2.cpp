@@ -7,6 +7,39 @@ namespace waveshare_epaper {
 
 static const char *const TAG = "waveshare_4.2v2";
 
+// Taken from https://files.waveshare.com/upload/9/97/4.2-inch-e-Paper-V2-user-manual.pdf
+
+static const uint8_t SET_GATE_DRIVING_VOLTAGE = 0x03;
+static const uint8_t SET_SOURCE_DRIVING_VOLTAGE = 0x04;
+static const uint8_t BOOSTER_SOFT_START_CONTROL = 0x0c;
+static const uint8_t DEEP_SLEEP = 0x10;
+static const uint8_t DATA_ENTRY_MODE = 0x11;
+// Software / Soft Reset
+static const uint8_t SW_RESET = 0x12;
+static const uint8_t WRITE_TO_TEMPERATURE_REGISTER = 0x1a;
+static const uint8_t MASTER_ACTIVATION = 0x20;
+static const uint8_t DISPLAY_UPDATE_CONTROL_1 = 0x21;
+static const uint8_t DISPLAY_UPDATE_CONTROL_2 = 0x22;
+static const uint8_t BORDER_WAVEFORM_CONTROL = 0x3c;
+// Write the black/white values to RAM
+static const uint8_t WRITE_RAM_BW = 0x24;
+// Write the secondary colour values to RAM (errata in data sheet, likely from a BWR model)
+static const uint8_t WRITE_RAM_RED = 0x26;
+static const uint8_t WRITE_VCOM_REGISTER = 0x2c;
+// Write LUT register (227 bytes)
+static const uint8_t WRITE_LUT_REGISTER = 0x32;
+// Option for LUT end
+static const uint8_t END_OPTION = 0x3f;
+// Sets the X windowing positions
+static const uint8_t SET_RAM_X_START_END_POSITION = 0x44;
+// Sets the Y windowing postiions
+static const uint8_t SET_RAM_Y_START_END_POSITION = 0x45;
+// Set X address counter
+static const uint8_t SET_RAM_X_ADDRESS = 0x4e;
+// Set the Y address counter
+static const uint8_t SET_RAM_Y_ADDRESS = 0x4f;
+
+
 static const uint8_t LUT_ALL[233] = {
     0x01, 0x0A, 0x1B, 0x0F, 0x03, 0x01, 0x01, 0x05, 0x0A, 0x01, 0x0A, 0x01, 0x01, 0x01, 0x05, 0x08, 0x03, 0x02,
     0x04, 0x01, 0x01, 0x01, 0x04, 0x04, 0x02, 0x00, 0x01, 0x01, 0x01, 0x00, 0x00, 0x00, 0x00, 0x01, 0x01, 0x01,
@@ -66,25 +99,25 @@ void WaveshareEPaper4P2InV2::update_(TurnOnMode mode) {
   }
 
   if (mode == MODE_PARTIAL) {
-    this->command(0x21);
+    this->command(DISPLAY_UPDATE_CONTROL_1);
     this->data(0x00);
     this->data(0x00);
 
-    this->command(0x3C);
+    this->command(BORDER_WAVEFORM_CONTROL);
     this->data(0x80);
 
     //    this->set_window_(0, 0, this->get_width_internal() - 1, this->get_height_internal() - 1);
     //    this->set_cursor_(0, 0);
   } else if (mode == MODE_FULL) {
-    this->command(0x21);
+    this->command(DISPLAY_UPDATE_CONTROL_1);
     this->data(0x40);
     this->data(0x00);
 
-    this->command(0x3C);
+    this->command(BORDER_WAVEFORM_CONTROL);
     this->data(0x05);
   }
 
-  this->command(0x24);
+  this->command(WRITE_RAM_BW);
   this->start_data_();
   if (mode == MODE_GRAYSCALE4) {
     this->write_array(this->buffer_, buf_half_len);
@@ -95,12 +128,12 @@ void WaveshareEPaper4P2InV2::update_(TurnOnMode mode) {
 
   // new data
   if ((mode == MODE_FULL) || (mode == MODE_FAST)) {
-    this->command(0x26);
+    this->command(WRITE_RAM_RED);
     this->start_data_();
     this->write_array(this->buffer_, this->get_buffer_length_());
     this->end_data_();
   } else if (mode == MODE_GRAYSCALE4) {
-    this->command(0x26);
+    this->command(WRITE_RAM_RED);
     this->start_data_();
     this->write_array(this->buffer_ + buf_half_len, buf_half_len);
     this->end_data_();
@@ -113,7 +146,7 @@ void WaveshareEPaper4P2InV2::update_(TurnOnMode mode) {
 }
 
 void WaveshareEPaper4P2InV2::turn_on_display_(TurnOnMode mode) {
-  this->command(0x22);
+  this->command(DISPLAY_UPDATE_CONTROL_2);
   switch (mode) {
     case MODE_GRAYSCALE4:
       this->data(0xcf);
@@ -129,18 +162,18 @@ void WaveshareEPaper4P2InV2::turn_on_display_(TurnOnMode mode) {
       this->data(0xf7);
       break;
   }
-  this->command(0x20);
+  this->command(MASTER_ACTIVATION);
 
   // possible timeout.
   this->wait_until_idle_();
 }
 
 void WaveshareEPaper4P2InV2::set_window_(uint16_t x, uint16_t y, uint16_t x2, uint16_t y2) {
-  this->command(0x44);  // SET_RAM_X_ADDRESS_START_END_POSITION
+  this->command(SET_RAM_X_START_END_POSITION);
   this->data((x >> 3) & 0xFF);
   this->data((x2 >> 3) & 0xFF);
 
-  this->command(0x45);  // SET_RAM_Y_ADDRESS_START_END_POSITION
+  this->command(SET_RAM_Y_START_END_POSITION);
   this->data(y & 0xFF);
   this->data((y >> 8) & 0xFF);
   this->data(62 & 0xFF);
@@ -157,12 +190,12 @@ void WaveshareEPaper4P2InV2::clear_() {
   uint8_t *buffer = (uint8_t *) calloc(bufflen, sizeof(uint8_t));
   memset(buffer, 0xff, bufflen);
 
-  this->command(0x24);
+  this->command(WRITE_RAM_BW);
   this->start_data_();
   this->write_array(buffer, bufflen);
   this->end_data_();
 
-  this->command(0x26);
+  this->command(WRITE_RAM_RED);
   this->start_data_();
   this->write_array(buffer, bufflen);
   this->end_data_();
@@ -171,32 +204,32 @@ void WaveshareEPaper4P2InV2::clear_() {
 }
 
 void WaveshareEPaper4P2InV2::set_cursor_(uint16_t x, uint16_t y) {
-  this->command(0x4E);  // SET_RAM_X_ADDRESS_COUNTER
+  this->command(SET_RAM_X_ADDRESS);
   this->data(x & 0xFF);
 
-  this->command(0x4F);  // SET_RAM_Y_ADDRESS_COUNTER
+  this->command(SET_RAM_Y_ADDRESS);
   this->data(y & 0xFF);
   this->data((y >> 8) & 0xFF);
 }
 
 void WaveshareEPaper4P2InV2::write_lut_() {
-  this->command(0x32);
+  this->command(WRITE_LUT_REGISTER);
   this->start_data_();
   this->write_array(LUT_ALL, 227);
   this->end_data_();
 
-  this->command(0x3F);
+  this->command(END_OPTION);
   this->data(LUT_ALL[227]);
 
-  this->command(0x03);
+  this->command(SET_GATE_DRIVING_VOLTAGE);
   this->data(LUT_ALL[228]);
 
-  this->command(0x04);
+  this->command(SET_SOURCE_DRIVING_VOLTAGE);
   this->data(LUT_ALL[229]);
   this->data(LUT_ALL[230]);
   this->data(LUT_ALL[231]);
 
-  this->command(0x2c);
+  this->command(WRITE_VCOM_REGISTER);
   this->data(LUT_ALL[232]);
 }
 
@@ -208,12 +241,12 @@ void WaveshareEPaper4P2InV2::initialize_internal_(TurnOnMode mode) {
   if (!this->wait_until_idle_()) {
     ESP_LOGW(TAG, "wait_until_idle_ returned FALSE. Is your busy pin set?");
   }
-  this->command(0x12);  // soft  reset
+  this->command(SW_RESET);
   if (!this->wait_until_idle_()) {
     ESP_LOGW(TAG, "wait_until_idle_ returned FALSE. Is your busy pin set?");
   }
 
-  this->command(0x21);
+  this->command(DISPLAY_UPDATE_CONTROL_1);
   if (mode == MODE_GRAYSCALE4) {
     this->data(0x00);
   } else {
@@ -221,7 +254,7 @@ void WaveshareEPaper4P2InV2::initialize_internal_(TurnOnMode mode) {
   }
   this->data(0x00);
 
-  this->command(0x3C);
+  this->command(BORDER_WAVEFORM_CONTROL);
   if (mode == MODE_GRAYSCALE4) {
     this->data(0x03);
   } else {
@@ -231,23 +264,23 @@ void WaveshareEPaper4P2InV2::initialize_internal_(TurnOnMode mode) {
   if (mode == MODE_FAST) {
 #if MODE_1_5_SECOND
     // 1.5s
-    this->command(0x1A);  // Write to temperature register
+    this->command(WRITE_TO_TEMPERATURE_REGISTER);
     this->data(0x6E);
 #endif
 #if MODE_1_SECOND
     // 1s
-    this->command(0x1A);  // Write to temperature register
+    this->command(WRITE_TO_TEMPERATURE_REGISTER);
     this->data(0x5A);
 #endif
 
-    this->command(0x22);  // Load temperature value
-    this->data(0x91);
-    this->command(0x20);
+    this->command(DISPLAY_UPDATE_CONTROL_2);
+    this->data(0x91); // Enable Clock Signal, Load LUT with Display Mode 1, Disable Clock Signal
+    this->command(MASTER_ACTIVATION);
     if (!this->wait_until_idle_()) {
       ESP_LOGW(TAG, "wait_until_idle_ returned FALSE. Is your busy pin set?");
     }
   } else if (mode == MODE_GRAYSCALE4) {
-    this->command(0x0C);
+    this->command(BOOSTER_SOFT_START_CONTROL);
     this->data(0x8B);
     this->data(0x9C);
     this->data(0xA4);
@@ -256,8 +289,8 @@ void WaveshareEPaper4P2InV2::initialize_internal_(TurnOnMode mode) {
     this->write_lut_();
   }
 
-  this->command(0x11);  // data entry mode
-  this->data(0x03);     // X-mode
+  this->command(DATA_ENTRY_MODE);
+  this->data(0x03);  // X-mode
 
   this->set_window_(0, 0, this->get_width_internal() - 1, this->get_height_internal() - 1);
   this->set_cursor_(0, 0);
@@ -287,8 +320,8 @@ uint32_t WaveshareEPaper4P2InV2::idle_timeout_() {
 }
 
 void WaveshareEPaper4P2InV2::deep_sleep() {
-  this->command(0x10);
-  this->data(0x01);
+  this->command(DEEP_SLEEP);
+  this->data(0x01); // Deep Sleep Mode 1
   // Instead of delay(200), we'll rely on the busy pin to indicate when the display is ready
   // The busy pin will be checked in wait_until_idle_() before any new operations
 }
