@@ -7,13 +7,14 @@ from esphome.const import (
     CONF_DC_PIN,
     CONF_FULL_UPDATE_EVERY,
     CONF_ID,
-    CONF_INITIAL_MODE,
     CONF_LAMBDA,
     CONF_MODEL,
     CONF_PAGES,
     CONF_RESET_DURATION,
     CONF_RESET_PIN,
 )
+
+CONF_DISPLAY_MODE = "display_mode"
 
 DEPENDENCIES = ["spi"]
 
@@ -154,6 +155,14 @@ MODELS = {
 
 RESET_PIN_REQUIRED_MODELS = ("2.13inv2", "2.13in-ttgo-b74")
 
+DisplayMode = waveshare_epaper_ns.enum("DisplayMode")
+DISPLAY_MODES = {
+    "PARTIAL": DisplayMode.MODE_PARTIAL,
+    "FULL": DisplayMode.MODE_FULL,
+    "FAST": DisplayMode.MODE_FAST,
+    "GRAYSCALE4": DisplayMode.MODE_GRAYSCALE4
+}
+
 
 def validate_full_update_every_only_types_ac(value):
     if CONF_FULL_UPDATE_EVERY not in value:
@@ -180,11 +189,11 @@ def validate_reset_pin_required(config):
 
 def validate_grayscale4_supported(config):
     print(config[CONF_MODEL])
-    if CONF_INITIAL_MODE in config:
+    if CONF_DISPLAY_MODE in config:
         if config[CONF_MODEL] in ["4.20in-v2"]:
             return config
         raise cv.Invalid(
-            f"'{CONF_INITIAL_MODE}' is supported for model {config[CONF_MODEL]}"
+            f"'{CONF_DISPLAY_MODE}' is not supported for model {config[CONF_MODEL]}"
         )
     return config
 
@@ -202,7 +211,7 @@ CONFIG_SCHEMA = cv.All(
                 cv.positive_time_period_milliseconds,
                 cv.Range(max=core.TimePeriod(milliseconds=500)),
             ),
-            cv.Optional(CONF_INITIAL_MODE): cv.int_range(min=1, max=3),
+            cv.Optional(CONF_DISPLAY_MODE): cv.enum(DISPLAY_MODES, upper=True),
         }
     )
     .extend(cv.polling_component_schema("1s"))
@@ -250,5 +259,5 @@ async def to_code(config):
         cg.add(var.set_full_update_every(config[CONF_FULL_UPDATE_EVERY]))
     if CONF_RESET_DURATION in config:
         cg.add(var.set_reset_duration(config[CONF_RESET_DURATION]))
-    if CONF_INITIAL_MODE in config:
-        cg.add(var.set_initial_mode(config[CONF_INITIAL_MODE]))
+    if CONF_DISPLAY_MODE in config:
+        cg.add(var.set_display_mode(config[CONF_DISPLAY_MODE]))

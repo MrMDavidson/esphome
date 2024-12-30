@@ -5,7 +5,7 @@
 namespace esphome {
 namespace waveshare_epaper {
 
-enum TurnOnMode { MODE_PARTIAL = 0, MODE_FULL, MODE_FAST, MODE_GRAYSCALE4 };
+enum DisplayMode { MODE_PARTIAL = 0, MODE_FULL, MODE_FAST, MODE_GRAYSCALE4 };
 
 class WaveshareEPaper4P2InV2 : public WaveshareEPaper {
  public:
@@ -15,12 +15,12 @@ class WaveshareEPaper4P2InV2 : public WaveshareEPaper {
   void deep_sleep() override;
 
   void set_full_update_every(uint32_t full_update_every);
-  void set_initial_mode(uint8_t mode) { this->initial_mode_ = (TurnOnMode) mode; }
+  void set_display_mode(DisplayMode mode) { this->display_mode_ = mode; }
 
  protected:
-  void initialize_internal_(TurnOnMode mode);
-  void update_(TurnOnMode mode);
-  void turn_on_display_(TurnOnMode mode);
+  void initialize_internal_(DisplayMode mode);
+  void update_(DisplayMode mode);
+  void turn_on_display_(DisplayMode mode);
 
   void write_lut_();
 
@@ -38,7 +38,7 @@ class WaveshareEPaper4P2InV2 : public WaveshareEPaper {
   uint32_t full_update_every_{30};
   uint32_t at_update_{0};
   bool is_busy_{false};
-  TurnOnMode initial_mode_{MODE_FAST};
+  DisplayMode display_mode_{MODE_FAST};
 };
 
 }  // namespace waveshare_epaper

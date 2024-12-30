@@ -57,7 +57,7 @@ static const uint8_t LUT_ALL[233] = {
 };
 
 uint32_t WaveshareEPaper4P2InV2::get_buffer_length_() {
-  if (this->initial_mode_ == MODE_GRAYSCALE4) {
+  if (this->display_mode_ == MODE_GRAYSCALE4) {
     // black and gray buffer
     return this->get_width_controller() * this->get_height_internal() / 4u;
   } else {
@@ -70,10 +70,10 @@ void WaveshareEPaper4P2InV2::display() {
   if (this->is_busy_ || (this->busy_pin_ != nullptr && this->busy_pin_->digital_read()))
     return;
   this->is_busy_ = true;
-  if (this->initial_mode_ == MODE_GRAYSCALE4) {
+  if (this->display_mode_ == MODE_GRAYSCALE4) {
     ESP_LOGD(TAG, "Performing grayscale4 update");
     this->update_(MODE_GRAYSCALE4);
-  } else if (this->initial_mode_ == MODE_FAST) {
+  } else if (this->display_mode_ == MODE_FAST) {
     ESP_LOGD(TAG, "Performing fast update");
     this->update_(MODE_FAST);
   } else {
@@ -90,7 +90,7 @@ void WaveshareEPaper4P2InV2::display() {
   }
 }
 
-void WaveshareEPaper4P2InV2::update_(TurnOnMode mode) {
+void WaveshareEPaper4P2InV2::update_(DisplayMode mode) {
   const uint32_t buf_half_len = this->get_buffer_length_() / 2u;
 
   this->reset_();
@@ -145,7 +145,7 @@ void WaveshareEPaper4P2InV2::update_(TurnOnMode mode) {
   this->is_busy_ = false;
 }
 
-void WaveshareEPaper4P2InV2::turn_on_display_(TurnOnMode mode) {
+void WaveshareEPaper4P2InV2::turn_on_display_(DisplayMode mode) {
   this->command(DISPLAY_UPDATE_CONTROL_2);
   switch (mode) {
     case MODE_GRAYSCALE4:
@@ -182,7 +182,7 @@ void WaveshareEPaper4P2InV2::set_window_(uint16_t x, uint16_t y, uint16_t x2, ui
 
 void WaveshareEPaper4P2InV2::clear_() {
   uint32_t bufflen;
-  if (this->initial_mode_ == MODE_GRAYSCALE4) {
+  if (this->display_mode_ == MODE_GRAYSCALE4) {
     bufflen = this->get_buffer_length_() / 2u;
   } else {
     bufflen = this->get_buffer_length_();
@@ -233,7 +233,7 @@ void WaveshareEPaper4P2InV2::write_lut_() {
   this->data(LUT_ALL[232]);
 }
 
-void WaveshareEPaper4P2InV2::initialize_internal_(TurnOnMode mode) {
+void WaveshareEPaper4P2InV2::initialize_internal_(DisplayMode mode) {
   static const uint8_t MODE_1_SECOND = 1;
   static const uint8_t MODE_1_5_SECOND = 0;
 
@@ -304,15 +304,15 @@ void WaveshareEPaper4P2InV2::initialize_internal_(TurnOnMode mode) {
 }
 
 void WaveshareEPaper4P2InV2::initialize() {
-  if (this->initial_mode_ == MODE_PARTIAL) {
+  if (this->display_mode_ == MODE_PARTIAL) {
     this->initialize_internal_(MODE_FULL);
   } else {
-    this->initialize_internal_(this->initial_mode_);
+    this->initialize_internal_(this->display_mode_);
   }
 }
 
 uint32_t WaveshareEPaper4P2InV2::idle_timeout_() {
-  if (this->initial_mode_ == MODE_GRAYSCALE4) {
+  if (this->display_mode_ == MODE_GRAYSCALE4) {
     return 1000;
   } else {
     return 100;
@@ -352,7 +352,7 @@ void HOT WaveshareEPaper4P2InV2::draw_absolute_pixel_internal(int x, int y, Colo
   const uint8_t subpos = x & 0x07;
   const uint32_t buf_half_len = this->get_buffer_length_() / 2u;
 
-  if (this->initial_mode_ == MODE_GRAYSCALE4) {
+  if (this->display_mode_ == MODE_GRAYSCALE4) {
     uint8_t gray = (color.white != 0) ? color.white : ((color.red * 299 + color.green * 587 + color.blue * 114) / 1000);
 
     if (gray >= 192) {
@@ -389,10 +389,10 @@ void HOT WaveshareEPaper4P2InV2::draw_absolute_pixel_internal(int x, int y, Colo
 void WaveshareEPaper4P2InV2::dump_config() {
   LOG_DISPLAY("", "Waveshare E-Paper", this)
   ESP_LOGCONFIG(TAG, "  Model: 4.20inV2");
-  if (this->initial_mode_ == MODE_GRAYSCALE4) {
-    ESP_LOGCONFIG(TAG, "  Initial Mode: 4 Grayscale");
-  } else if (this->initial_mode_ == MODE_FAST) {
-    ESP_LOGCONFIG(TAG, "  Initial Mode: Fast");
+  if (this->display_mode_ == MODE_GRAYSCALE4) {
+    ESP_LOGCONFIG(TAG, "  Display Mode: 4 Grayscale");
+  } else if (this->display_mode_ == MODE_FAST) {
+    ESP_LOGCONFIG(TAG, "  Display Mode: Fast");
   }
   LOG_PIN("  CS Pin: ", this->cs_)
   LOG_PIN("  Reset Pin: ", this->reset_pin_)
