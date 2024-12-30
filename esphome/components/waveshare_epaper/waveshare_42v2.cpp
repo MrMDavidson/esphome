@@ -274,7 +274,7 @@ void WaveshareEPaper4P2InV2::initialize_internal_(TurnOnMode mode) {
 #endif
 
     this->command(DISPLAY_UPDATE_CONTROL_2);
-    this->data(0x91); // Enable Clock Signal, Load LUT with Display Mode 1, Disable Clock Signal
+    this->data(0x91);  // Enable Clock Signal, Load LUT with Display Mode 1, Disable Clock Signal
     this->command(MASTER_ACTIVATION);
     if (!this->wait_until_idle_()) {
       ESP_LOGW(TAG, "wait_until_idle_ returned FALSE. Is your busy pin set?");
@@ -321,7 +321,7 @@ uint32_t WaveshareEPaper4P2InV2::idle_timeout_() {
 
 void WaveshareEPaper4P2InV2::deep_sleep() {
   this->command(DEEP_SLEEP);
-  this->data(0x01); // Deep Sleep Mode 1
+  this->data(0x01);  // Deep Sleep Mode 1
   // Instead of delay(200), we'll rely on the busy pin to indicate when the display is ready
   // The busy pin will be checked in wait_until_idle_() before any new operations
 }
