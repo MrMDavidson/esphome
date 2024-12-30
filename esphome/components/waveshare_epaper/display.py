@@ -160,7 +160,7 @@ DISPLAY_MODES = {
     "PARTIAL": DisplayMode.MODE_PARTIAL,
     "FULL": DisplayMode.MODE_FULL,
     "FAST": DisplayMode.MODE_FAST,
-    "GRAYSCALE4": DisplayMode.MODE_GRAYSCALE4
+    "GRAYSCALE4": DisplayMode.MODE_GRAYSCALE4,
 }
 
 
