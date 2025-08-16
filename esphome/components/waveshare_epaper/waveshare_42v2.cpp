@@ -372,16 +372,13 @@ void HOT WaveshareEPaper4P2InV2::draw_absolute_pixel_internal(int x, int y, Colo
       this->buffer_[pos + buf_half_len] |= (0x80 >> subpos);
     }
   } else {
-    // Binary mode logic
-    if (!color.is_on()) {
-      this->buffer_[pos] &= ~(0x80 >> subpos);
-    } else {
-      if ((color.r > 0) || (color.g > 0) || (color.b > 0)) {
-        this->buffer_[pos] &= ~(0x80 >> subpos);
+      if (!color.is_on()) {
+        // White
+        this->buffer_[pos] |= 0x80 >> subpos;
       } else {
-        this->buffer_[pos] |= (0x80 >> subpos);
+        // Black
+        this->buffer_[pos] &= ~(0x80 >> subpos);
       }
-    }
   }
 }
 
