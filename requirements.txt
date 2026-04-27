@@ -7,7 +7,7 @@ colorama==0.4.6
 icmplib==3.0.4
 tornado==6.4
 tzlocal==5.2    # from time
-tzdata>=2021.1  # from time
+tzdata>=2026.2  # from time
 pyserial==3.5
 platformio==6.1.15  # When updating platformio, also update Dockerfile
 esptool==4.7.0
